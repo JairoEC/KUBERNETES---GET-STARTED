@@ -1,5 +1,33 @@
-# KUBERNETES---GET-STARTED
+<!-- LOGOS - IMAGENES -->
+[kubernetes]: ./resources/imgs/kubernetes-plain-wordmark.png "Logo kubernetes"
+[cri-o]: ./resources/imgs/crio-logo.png "Logo CRI-O"
+
+# KUBERNETES---GET-STARTED 
+<div style="display: flex;justify-content: center; align-items: center; " >
+    <img src="./resources/imgs/kubernetes-plain-wordmark.png" height="100px" width="100px" alt="Kubernetes logo">
+    <img src="./resources/imgs/crio-logo.png" height="140px" width="180px" alt="CRI-O logo">
+</div>
+
 Pasos de instalacion inicial de Kubernetes
+
+### INDICE
+
+1. [Configuración en todos los nodos](#configuración-en-todos-los-nodos)
+    1. [Configuración del SO](#a-configuración-del-so)
+    2. [Instalar CRI-O](#4-instalacion-cri-o)
+    3. [Instalar Kubernetes](#incializar-kubernetes)
+    4. [Instalar Cilium](#4-instalacion-cri-o)
+2. [Configuración en el nodo master](#configuración-en-el-nodo-master)
+3. [Configuración en los nodo worker](#configuracion-en-los-nodos-workers)
+### ¿QUE SE INSTALARÁ?
+
+- Kubernetes
+- CRI-O
+- CILIUM
+
+# CONFIGURACIÓN EN TODOS LOS NODOS
+
+# A. CONFIGURACIÓN DEL SO
 
 ## 1. Actualización del sistema
 1.1 instalar dependecias y paquetes de apt
@@ -68,93 +96,98 @@ Pasos de instalacion inicial de Kubernetes
 5.1 Agregar entradas de host
 
     cat <<EOF | sudo tee -a /etc/hosts
-    192.168.18.2 master-k8s master
-    192.168.18.3 worker-1 worker1
-    192.168.18.4 worker-2 worker2
+    [IP-MASTER] [HOSTNAME-MASTER] master
+    [IP-WORKER-1] [HOSTNAME-WORKER-1] worker1
+    [IP-WORKER-2] [HOSTNAME-WORKER-2] worker2
     EOF
 
 5.2 Verificar
 
 `cat /etc/hosts`
 
-# INSTALACION DE CRI-O
+# B. INSTALACIÓN DE CRI-O
 **EJECUTAR EN TODOS LOS NODOS**
 ## 1. Definir variables de version
 
     export CRIO_VERSION=v1.31
     export OS=xUbuntu_24.04
 
-## 2. Agregar repositorios CRI-O
+## 2. Importar claves keyring GPG
 
-2.1 Dependencias
-
-    echo "deb [signed-by=/usr/share/keyrings/libcontainers-archive-keyring.gpg] \
-    https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /" \
-    | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
-
-2.2 Repositorio de CRI-O
-
-    echo "deb [signed-by=/usr/share/keyrings/libcontainers-crio-archive-keyring.gpg] \
-    https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$CRIO_VERSION/$OS/ /" \
-    | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:$CRIO_VERSION.list
-
-## 3. Importar claves keyring GPG
-
-3.1 Crea carpeta/directorio para keyring
+2.1 Crea carpeta/directorio para keyring
 
 `sudo mkdir -p /etc/apt/keyrings`
 
-3.2 Descargar keyring oficial de CRI-O
+2.2 Descargar keyring oficial de CRI-O
 
-    curl -fsSL https://pkgs.k8s.io/addons:/cri-o:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg
+    curl -fsSL https://pkgs.k8s.io/addons:/cri-o:/stable:/v1.31/deb/Release.key \
+    | sudo gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg
 
-3.3 Agregar repositorio oficial
+2.3 Agregar repositorio oficial
 
     echo "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://pkgs.k8s.io/addons:/cri-o:/stable:/v1.31/deb/ /" | sudo tee /etc/apt/sources.list.d/cri-o.list
 
-## 4. INSTALACION CRI-O
+## 3. Instalación de CRI-O
 
-    # Actualizar repositorios
+3.1 Actualizar repositorios
+    
     sudo apt-get update
-    # Instalar CRI-O y dependencias
+    
+3.2 Instalar CRI-O y dependencias
+    
     sudo apt-get install -y cri-o
-    # Recargar systemd
+    
+3.3 Recargar systemd
+    
     sudo systemctl daemon-reload
-    # Habilitar CRI-O para inicio automático
+    
+3.4 Habilitar CRI-O para inicio automático
+    
     sudo systemctl enable crio
-    # Iniciar CRI-O
+    
+3.5 Iniciar CRI-O
+    
     sudo systemctl start crio
-    # Verificar estado
+    
+3.6 Verificar estado
+    
     sudo systemctl status crio
 
-## 5. VERIFICACION DE CRIO
+## 4. Verificación de CRI-O
 
-    # Ver versión de CRI-O
+4.1 Ver versión de CRI-O
+    
     sudo crio version
-    # Ver información del runtime
+    
+4.2 Ver información del runtime
+    
     sudo crictl version
     sudo crictl info
 
     apt-cache policy cri-o
-    # Verificar que el socket existe
+    
+4.3 Verificar que el socket existe
+    
     sudo ls -la /var/run/crio/crio.sock
 
-# INSTALACION DE KUBERNETES
+# C. INSTALACIÓN DE KUBERNETES
 
 **EJECUTAR EN TODOS LOS NODOS**
 
-Asegurar que existe la carpeta /etc/apt/keyrings
+Asegurar que **existe** la carpeta `/etc/apt/keyrings`
 
-## 1. DESCARGAR KEYRING GPG DE KUBERNETES
+## 1. Descargar keyring GPG de Kubernetes
 
     curl -4 -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key \
     | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
-## 2. AGREGAR REPOSITORIO DE KUBERNETES
+## 2. Agregar repositorio de Kubernetes
 
     echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
-## 3. INSTALAR DEPENDENCIAS DESCARGADAS DE KUBERNETES
+## 3. Instalar dependencias descargadas de Kubernetes
+
+3.1 Instalación de kubelet, kubeadm y kubectl
 
     sudo apt install -y kubelet kubeadm kubectl
 
@@ -168,44 +201,31 @@ Asegurar que existe la carpeta /etc/apt/keyrings
     dpkg -l | grep kubeadm
     dpkg -l | grep kubectl
 
-## 4. CONFIGURAR KUBELET PARA USAR CRI-O
+## 4. Configurar kubelet para usar CRI-O
 
     cat <<EOF | sudo tee /etc/default/kubelet
     KUBELET_EXTRA_ARGS="--container-runtime-endpoint=unix:///var/run/crio/crio.sock"
     EOF
-    # Recargar systemd
+
+Recargar systemd
+
     sudo systemctl daemon-reload
-    # Reiniciar kubelet
+
+Reiniciar kubelet
+    
     sudo systemctl restart kubelet
-    # Verificar estado (estará en auto-restart hasta que se inicialice el cluster)
+    
+Verificar estado (estará en auto-restart hasta que se inicialice el cluster)
+    
     sudo systemctl status kubelet
 
-# SOLO MASTER
+## Instalando conntrack
 
-    cat <<EOF > kubeadm-config.yaml
-    apiVersion: kubeadm.k8s.io/v1beta4
-    kind: ClusterConfiguration
-
-    kubernetesVersion: v1.31.14
-
-    controlPlaneEndpoint: "master-k8s:6443"
-
-    networking:
-    podSubnet: "10.4.0.0/24"
-    serviceSubnet: "10.96.0.0/12"
-
-
-    ---
-    apiVersion: kubeadm.k8s.io/v1beta4
-    kind: InitConfiguration
-
-    nodeRegistration:
-    criSocket: "unix:///var/run/crio/crio.sock"
-    EOF
-
-## DMAS
+*Conntrack es usado en para registrar y monitorear el trafico de red*
 
     sudo apt install -y conntrack
+
+Comprobar instalación
 
     which conntrack
 
@@ -217,42 +237,162 @@ o
 
     /usr/bin/conntrack
 
-## INCIALIZAR KUBERNETES
+# CONFIGURACIÓN EN EL NODO MASTER
+
+## 1. Crear archivo de configuracion.
+
+1.1 Crear archivo de econfiguracion
+
+```
+cat <<EOF > kubeadm-config.yaml
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+
+kubernetesVersion: v1.31.14
+
+controlPlaneEndpoint: "[HOSTNAME-MASTER]:6443"
+
+networking:
+podSubnet: "10.4.0.0/16"
+serviceSubnet: "10.96.0.0/12"
+
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+
+nodeRegistration:
+criSocket: "unix:///var/run/crio/crio.sock"
+EOF
+```
+
+1.2 Inicializar kubernetes
 
     sudo kubeadm init --config=kubeadm-config.yaml
 
+>En realidad es mejor usar un elemento yaml que escribir el codigo de forma directa entonces es normal encontrarnos con este tipo de files.
 
-## config de ctl
+1.3 config de ctl
 
-    #Crear directorio .kube
+1.3.1 Crear directorio .kube
+    
     mkdir -p $HOME/.kube
-    # Copiar archivo de configuración
+    
+1.3.2 Copiar archivo de configuración
+    
     sudo cp-i /etc/kubernetes/admin.conf $HOME/.kube/config
-    # Cambiar permisos al usuario
+    
+1.3.3 Cambiar permisos al usuario
+    
     sudo chown $(id -u):$(id -g) $HOME/.kube/config
-    # Verificar acceso al cluster
+    
+1.3.4 Verificar acceso al cluster
+    
     kubectl get nodes
-    # Ver información del cluster
+    
+1.3.5 Ver información del cluster
+    
     kubectl cluster-info
 
-# ISNTALAR CILIUM
+# D. INSTALAR CILIUM
 
-    # Obtener la última versión estable
+d.1 Obtener la última versión estable
+
     CILIUM_CLI_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt)
     CLI_ARCH=amd64
 
-    # Descargar Cilium CLI
+d.2 Descargar Cilium CLI
+    
     curl -L --fail --remote-name-all \
     https://github.com/cilium/cilium-cli/releases/download/${CILIUM_CLI_VERSION}/cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}
 
-    # Verificar checksum
+d.3 Verificar checksum
+    
     sha256sum --check cilium-linux-${CLI_ARCH}.tar.gz.sha256sum
 
-    # Extraer e instalar
+d.4 Extraer e instalar
+    
     sudo tar xzvf cilium-linux-${CLI_ARCH}.tar.gz -C /usr/local/bin
 
-    # Limpiar
+d.5 Limpiar
+    
     rm cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}
 
-    # Verificar instalación
+d.6 Verificar instalación
+    
     cilium version --client
+
+VERIFICAR INSTALACIÓN DE CILIUM
+
+e.1 Ver estado de cilium
+
+    cilium status --wait
+
+e.2 Ver pods de Cilium
+
+    kubectl get pods -n kube-system -l k8s-app=cilium
+
+e.3 Ver logs de Cilium
+
+    kubectl logs -n kube-system -l k8s-app=cilium --tail=50
+
+VERIFICAR QUE EL MASTER ESTA READY
+
+    kubectl get nodes
+
+# CONFIGURACION EN LOS NODOS WORKERS
+
+*Es importante que guardes las keys generadas al inicializar kubernetes*
+Solo en caso que perdiste las keys pudes ejecutar el comando e el master:
+
+    sudo kubeadm token create --print-join-command
+
+1 Ejecutar en cada worker:
+
+    sudo kudeadm join [HOSTNAME-MASTER]:6443 \
+      --token [TOKEN-GENERADO] \
+      --discovery-token-ca-cert-hash sha256:[HASH_GENERADO] \
+      --cri-socket unix://var/run/crio/crio.sock
+
+
+# VERIFICACIÓN DEL CLUSTER
+
+**Desde el MASTER puedes monitorear todos los nodos registrados en el cluster**
+
+1 Ver todos los nodos
+
+    kube get nodes
+
+2 Ver con mas detalles
+
+    kubectl get nodes -o wide
+
+3 Ver pods del sistema distribuido
+
+    kubectl get pods -n kube-system -o wide
+
+# (OPCIONAL) ETIQUETAR WORKERS
+
+    kubectl label node [HOSTNAME-WORKER] node-role.kubernetes.io/worker=worker
+
+    # Verificar etiqueta
+
+    kubectl get nodes --show-labels
+
+
+
+
+[I'am a link to youtube](https://youtube.com)
+
+LOGO EN LINEA ![alt text](https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "Logo Title Text 1")
+
+
+
+[logo]: https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "Logo Title Text 2"
+
+
+
+Reference-style: 
+![alt text][logo]
+
+Kubernetes:
+![alt text][kubernetes]
